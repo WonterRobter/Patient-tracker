@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # 1. De Database
   db:
     image: mariadb:latest
     container_name: eetstudio_db
@@ -14,8 +15,17 @@ services:
       - "${DB_PORT}:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
-      # Dit zorgt ervoor dat onze tabellen direct worden aangemaakt bij de eerste start:
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  # 2. De Web Interface
+  adminer:
+    image: adminer:latest
+    container_name: eetstudio_adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
 
 volumes:
   mariadb_data:

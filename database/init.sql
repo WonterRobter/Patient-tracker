@@ -23,5 +23,4 @@ CREATE TABLE IF NOT EXISTS sessies (
     FOREIGN KEY (therapeut_id) REFERENCES therapeuten(id) ON DELETE CASCADE
 );
 
--- Voeg optioneel alvast wat testdata toe zodat we straks meteen resultaat zien
 INSERT INTO therapeuten (naam, discipline) VALUES ('Mama', 'Diëtist'), ('Collega X', 'Psycholoog');

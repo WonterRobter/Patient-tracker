@@ -78,5 +78,60 @@ def add_patient():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# NIEUW: Route om alle sessies op te halen
+@app.route('/api/sessies', methods=['GET'])
+def get_sessies():
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            # We maken de output wat mooier door de namen er direct bij te zoeken met een JOIN
+            sql = """
+                SELECT s.id, p.voornaam, p.achternaam, t.naam as therapeut, s.datum_tijd
+                FROM sessies s
+                JOIN patienten p ON s.patient_id = p.id
+                JOIN therapeuten t ON s.therapeut_id = t.id
+                ORDER BY s.datum_tijd DESC
+            """
+            cursor.execute(sql)
+            sessies_lijst = cursor.fetchall()
+        connection.close()
+        return jsonify(sessies_lijst)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+# NIEUW: Route om een sessie toe te voegen én puur het aantal te tellen
+@app.route('/api/sessies', methods=['POST'])
+def add_sessie():
+    try:
+        data = request.get_json()
+        patient_id = data['patient_id']
+        therapeut_id = data['therapeut_id']
+        datum_tijd = data['datum_tijd']
+
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            # 1. Voeg de nieuwe sessie toe aan het logboek
+            sql_insert = "INSERT INTO sessies (patient_id, therapeut_id, datum_tijd) VALUES (%s, %s, %s)"
+            cursor.execute(sql_insert, (patient_id, therapeut_id, datum_tijd))
+            
+            # 2. Tel direct het totaal aantal sessies voor deze patiënt
+            sql_count = "SELECT COUNT(*) as totaal FROM sessies WHERE patient_id = %s"
+            cursor.execute(sql_count, (patient_id,))
+            result = cursor.fetchone()
+            aantal_sessies = result['totaal']
+            
+        connection.commit()
+        connection.close()
+
+        # Stuur het antwoord terug met uitsluitend het kale getal
+        return jsonify({
+            "bericht": "Sessie succesvol geregistreerd!",
+            "aantal_sessies": aantal_sessies
+        }), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -27,5 +27,21 @@ services:
     depends_on:
       - db
 
+  api:
+    build: ./backend
+    container_name: eetstudio_api
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - DB_HOST=db
+      - DB_USER=${MARIADB_USER}
+      - DB_PASSWORD=${MARIADB_PASSWORD}
+      - DB_NAME=${MARIADB_DATABASE}
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/app
+
 volumes:
   mariadb_data:

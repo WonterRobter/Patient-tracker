@@ -19,6 +19,9 @@ CREATE TABLE IF NOT EXISTS sessies (
     patient_id INT NOT NULL,
     therapeut_id INT NOT NULL,
     datum_tijd DATETIME NOT NULL,
+    bedrag DECIMAL(6,2) DEFAULT 0.00,
+    betaald BOOLEAN DEFAULT FALSE,
+    betaalmethode VARCHAR(20) DEFAULT NULL,
     FOREIGN KEY (patient_id) REFERENCES patienten(id) ON DELETE CASCADE,
     FOREIGN KEY (therapeut_id) REFERENCES therapeuten(id) ON DELETE CASCADE
 );

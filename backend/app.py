@@ -1,8 +1,10 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 import os
 import pymysql
 
 app = Flask(__name__)
+CORS(app)
 
 def get_db_connection():
     return pymysql.connect(
@@ -47,7 +49,7 @@ def get_patienten():
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            cursor.execute("SELECT * FROM patienten")
+            cursor.execute("SELECT * FROM patienten ORDER BY achternaam, voornaam")
             patienten_lijst = cursor.fetchall()
         connection.close()
         return jsonify(patienten_lijst)
@@ -58,7 +60,6 @@ def get_patienten():
 @app.route('/api/patienten', methods=['POST'])
 def add_patient():
     try:
-        # We vangen de JSON data op die de website straks opstuurt
         data = request.get_json()
         voornaam = data['voornaam']
         achternaam = data['achternaam']
@@ -66,11 +67,19 @@ def add_patient():
 
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            # We gebruiken %s om SQL-injecties te voorkomen (veiligheid voorop!)
+            # CHECK: Bestaat deze patiënt al?
+            cursor.execute(
+                "SELECT id FROM patienten WHERE voornaam = %s AND achternaam = %s AND geboortedatum = %s", 
+                (voornaam, achternaam, geboortedatum)
+            )
+            if cursor.fetchone():
+                connection.close()
+                return jsonify({"error": "Deze patiënt staat al in het systeem!"}), 400
+
+            # Zo niet, voeg toe
             sql = "INSERT INTO patienten (voornaam, achternaam, geboortedatum) VALUES (%s, %s, %s)"
             cursor.execute(sql, (voornaam, achternaam, geboortedatum))
         
-        # Bij een INSERT of UPDATE moet je altijd committen, anders slaat hij niks op
         connection.commit() 
         connection.close()
         
@@ -78,28 +87,34 @@ def add_patient():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# NIEUW: Route om alle sessies op te halen
+# Route om alle sessies op te halen
 @app.route('/api/sessies', methods=['GET'])
 def get_sessies():
     try:
+        patient_id = request.args.get('patient_id')
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            # We maken de output wat mooier door de namen er direct bij te zoeken met een JOIN
+            # We halen nu ook de betaalmethode op
             sql = """
-                SELECT s.id, p.voornaam, p.achternaam, t.naam as therapeut, s.datum_tijd
+                SELECT s.id, s.patient_id, p.voornaam, p.achternaam, t.naam as therapeut, 
+                       s.datum_tijd, s.bedrag, s.betaald, s.betaalmethode
                 FROM sessies s
                 JOIN patienten p ON s.patient_id = p.id
                 JOIN therapeuten t ON s.therapeut_id = t.id
-                ORDER BY s.datum_tijd DESC
             """
-            cursor.execute(sql)
+            if patient_id:
+                sql += " WHERE s.patient_id = %s ORDER BY s.datum_tijd DESC"
+                cursor.execute(sql, (patient_id,))
+            else:
+                sql += " ORDER BY s.datum_tijd DESC"
+                cursor.execute(sql)
+                
             sessies_lijst = cursor.fetchall()
         connection.close()
         return jsonify(sessies_lijst)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-# NIEUW: Route om een sessie toe te voegen én puur het aantal te tellen
+
 @app.route('/api/sessies', methods=['POST'])
 def add_sessie():
     try:
@@ -107,28 +122,44 @@ def add_sessie():
         patient_id = data['patient_id']
         therapeut_id = data['therapeut_id']
         datum_tijd = data['datum_tijd']
+        bedrag = data.get('bedrag', 0.00)
+        
+        # We kijken of de status onbetaald, Cash of Bancontact is
+        status = data.get('betaal_status', 'onbetaald')
+        betaald = status in ['Cash', 'Bancontact']
+        betaalmethode = status if betaald else None
 
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            # 1. Voeg de nieuwe sessie toe aan het logboek
-            sql_insert = "INSERT INTO sessies (patient_id, therapeut_id, datum_tijd) VALUES (%s, %s, %s)"
-            cursor.execute(sql_insert, (patient_id, therapeut_id, datum_tijd))
+            sql_insert = "INSERT INTO sessies (patient_id, therapeut_id, datum_tijd, bedrag, betaald, betaalmethode) VALUES (%s, %s, %s, %s, %s, %s)"
+            cursor.execute(sql_insert, (patient_id, therapeut_id, datum_tijd, bedrag, betaald, betaalmethode))
             
-            # 2. Tel direct het totaal aantal sessies voor deze patiënt
             sql_count = "SELECT COUNT(*) as totaal FROM sessies WHERE patient_id = %s"
             cursor.execute(sql_count, (patient_id,))
-            result = cursor.fetchone()
-            aantal_sessies = result['totaal']
+            aantal_sessies = cursor.fetchone()['totaal']
             
         connection.commit()
         connection.close()
 
-        # Stuur het antwoord terug met uitsluitend het kale getal
-        return jsonify({
-            "bericht": "Sessie succesvol geregistreerd!",
-            "aantal_sessies": aantal_sessies
-        }), 201
+        return jsonify({"bericht": "Sessie succesvol geregistreerd!", "aantal_sessies": aantal_sessies}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
+# NIEUW: Route om een onbetaalde sessie achteraf te updaten naar betaald
+@app.route('/api/sessies/<int:sessie_id>', methods=['PUT'])
+def update_sessie(sessie_id):
+    try:
+        data = request.get_json()
+        betaalmethode = data.get('betaalmethode') # Verwacht 'Cash' of 'Bancontact'
+
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            sql = "UPDATE sessies SET betaald = TRUE, betaalmethode = %s WHERE id = %s"
+            cursor.execute(sql, (betaalmethode, sessie_id))
+            
+        connection.commit()
+        connection.close()
+        return jsonify({"bericht": "Betaling succesvol verwerkt!"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

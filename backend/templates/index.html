@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>De Eetstudio - Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <h1>De Eetstudio</h1>
+        <div class="tab-knoppen">
+            <button id="btn-home" class="actief" onclick="wisselTab('home')">Home (Sessies)</button>
+            <button id="btn-admin" onclick="wisselTab('admin')">Admin (Beheer)</button>
+        </div>
+    </header>
+
+    <main>
+        <div id="tab-home" class="tab-sectie">
+            
+            <div class="no-print" style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+                
+                <section class="card">
+                    <h2>Nieuwe Sessie Registreren</h2>
+                    <form id="form-sessie">
+                        <label>Patiënt Zoeken & Selecteren:</label>
+                        <div class="autocomplete-wrapper">
+                            <input type="text" id="input-patient-sessie" placeholder="Typ een voornaam..." autocomplete="off" required>
+                            <span class="wis-knop" onclick="wisInputRegistratie()">✖</span>
+                            <div id="dropdown-patient-sessie" class="autocomplete-dropdown hidden"></div>
+                        </div>
+                        
+                        <label>Therapeut:</label>
+                        <select id="select-therapeut" required>
+                            <option value="" disabled selected>Kies een therapeut...</option>
+                        </select>
+                        
+                        <label>Datum & Tijd:</label>
+                        <input type="datetime-local" id="datum-tijd" required>
+
+                        <label>Bedrag (€):</label>
+                        <input type="number" id="bedrag" step="0.01" min="0" placeholder="65.00" required>
+
+                        <label>Betaalstatus:</label>
+                        <select id="betaal-status">
+                            <option value="onbetaald">Nog niet betaald</option>
+                            <option value="Cash">Betaald via Cash</option>
+                            <option value="Bancontact">Betaald via Bancontact</option>
+                        </select>
+
+                        <button type="submit">Opslaan</button>
+                    </form>
+                    <div id="msg-sessie" class="bericht"></div>
+                </section>
+
+                <section class="card opzoek-card">
+                    <h2>Patiënt Opzoeken & Status Filters</h2>
+                    <label>Filter op patiënt:</label>
+                    <div class="autocomplete-wrapper">
+                        <input type="text" id="input-filter-patient" placeholder="Typ een voornaam..." autocomplete="off">
+                        <span class="wis-knop" onclick="wisInputFilter()">✖</span>
+                        <div id="dropdown-filter-patient" class="autocomplete-dropdown hidden"></div>
+                    </div>
+
+                    <label style="margin-top: 10px;">Filter op betaalstatus:</label>
+                    <select id="filter-status" onchange="laadSessies()">
+                        <option value="alle">Alles tonen</option>
+                        <option value="onbetaald">Alleen openstaande (onbetaalde) sessies</option>
+                        <option value="betaald">Alleen betaalde sessies</option>
+                    </select>
+                    
+                    <div id="sessie-teller" class="teller-vak hidden">
+                        Totaal aantal sessies binnen filter: <span id="teller-getal">0</span>
+                    </div>
+                </section>
+
+            </div> <section class="card" style="margin-top: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px;">
+                    <h2 style="margin: 0;">Sessie Overzicht</h2>
+                    <div id="download-knoppen" class="hidden no-print" style="display: flex; gap: 10px; align-items: flex-end;">
+                        <button onclick="downloadRapport()" style="background-color: #2980b9; padding: 6px 12px; font-size: 13px; margin: 0;">📥 Download CSV</button>
+                        <button onclick="window.print()" style="background-color: #7f8c8d; padding: 6px 12px; font-size: 13px; margin: 0;">📄 Download PDF (Browser)</button>
+                    </div>
+                </div>
+
+                <table id="tabel-sessies">
+                    <thead>
+                        <tr>
+                            <th>Datum</th>
+                            <th>Patiënt</th>
+                            <th>Therapeut</th>
+                            <th>Bedrag</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </section>
+        </div>
+
+        <div id="tab-admin" class="tab-sectie hidden">
+            <div class="kolom-container">
+                <div class="kolom">
+                    <section class="card card-flex">
+                        <h2>Nieuwe Patiënt Toevoegen</h2>
+                        <form id="form-patient">
+                            <label>Voornaam:</label>
+                            <input type="text" id="voornaam" required>
+                            <label>Achternaam:</label>
+                            <input type="text" id="achternaam" required>
+                            <label>Geboortedatum:</label>
+                            <input type="date" id="geboortedatum" required>
+                            <button type="submit">Voeg Patiënt Toe</button>
+                        </form>
+                        <div id="msg-patient" class="bericht"></div>
+                        <div id="err-patient" class="foutmelding"></div>
+                    </section>
+                </div>
+
+                <div class="kolom">
+                    <section class="card card-flex">
+                        <h2>Nieuwe Therapeut Toevoegen</h2>
+                        <form id="form-therapeut">
+                            <label>Naam:</label>
+                            <input type="text" id="therapeut-naam" placeholder="Naam collega" required>
+                            <label>Discipline:</label>
+                            <input type="text" id="therapeut-discipline" placeholder="Bijv. Diëtist of Psycholoog" required>
+                            <button type="submit">Voeg Therapeut Toe</button>
+                        </form>
+                        <div id="msg-therapeut" class="bericht"></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="delete-modal" class="modal-overlay hidden no-print">
+        <div class="modal-content">
+            <h3 style="margin-top: 0;">Sessie verwijderen</h3>
+            <p>Ben je zeker dat je deze sessie wil verwijderen?</p>
+            <p id="delete-sessie-info" style="font-weight: bold; margin: 15px 0; color: #2c3e50; background: #ecf0f1; padding: 10px; border-radius: 4px;"></p>
+            <div class="modal-buttons">
+                <button class="btn-ja" onclick="bevestigVerwijderen()">JA</button>
+                <button class="btn-nee" onclick="sluitModal()">NEE</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

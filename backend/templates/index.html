@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>De Eetstudio - Dashboard</title>
+    <title>Eetstudio - Dashboard</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <header>
-        <h1>De Eetstudio</h1>
+        <h1>Eetstudio</h1>
         <div class="tab-knoppen">
             <button id="btn-home" class="actief" onclick="wisselTab('home')">Home (Sessies)</button>
             <button id="btn-admin" onclick="wisselTab('admin')">Admin (Beheer)</button>
@@ -17,9 +17,7 @@
 
     <main>
         <div id="tab-home" class="tab-sectie">
-            
             <div class="no-print" style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
-                
                 <section class="card">
                     <h2>Nieuwe Sessie Registreren</h2>
                     <form id="form-sessie">
@@ -73,8 +71,9 @@
                         Totaal aantal sessies binnen filter: <span id="teller-getal">0</span>
                     </div>
                 </section>
+            </div>
 
-            </div> <section class="card" style="margin-top: 20px;">
+            <section class="card" style="margin-top: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px;">
                     <h2 style="margin: 0;">Sessie Overzicht</h2>
                     <div id="download-knoppen" class="hidden no-print" style="display: flex; gap: 10px; align-items: flex-end;">
@@ -82,7 +81,6 @@
                         <button onclick="window.print()" style="background-color: #7f8c8d; padding: 6px 12px; font-size: 13px; margin: 0;">📄 Download PDF (Browser)</button>
                     </div>
                 </div>
-
                 <table id="tabel-sessies">
                     <thead>
                         <tr>
@@ -93,8 +91,7 @@
                             <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        </tbody>
+                    <tbody></tbody>
                 </table>
             </section>
         </div>
@@ -122,13 +119,48 @@
                     <section class="card card-flex">
                         <h2>Nieuwe Therapeut Toevoegen</h2>
                         <form id="form-therapeut">
-                            <label>Naam:</label>
-                            <input type="text" id="therapeut-naam" placeholder="Naam collega" required>
+                            <label>Voornaam:</label>
+                            <input type="text" id="therapeut-voornaam" required>
+                            <label>Achternaam:</label>
+                            <input type="text" id="therapeut-achternaam" required>
                             <label>Discipline:</label>
-                            <input type="text" id="therapeut-discipline" placeholder="Bijv. Diëtist of Psycholoog" required>
+                            <input type="text" id="therapeut-discipline" placeholder="Bijv. Diëtist" required>
                             <button type="submit">Voeg Therapeut Toe</button>
                         </form>
                         <div id="msg-therapeut" class="bericht"></div>
+                    </section>
+                </div>
+            </div>
+
+            <div class="kolom-container">
+                <div class="kolom">
+                    <section class="card">
+                        <h2>Patiënten Overzicht</h2>
+                        <table id="tabel-admin-patienten">
+                            <thead>
+                                <tr>
+                                    <th>Naam</th>
+                                    <th>Geboortedatum</th>
+                                    <th>Acties</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </section>
+                </div>
+                <div class="kolom">
+                    <section class="card">
+                        <h2>Therapeuten Overzicht</h2>
+                        <table id="tabel-admin-therapeuten">
+                            <thead>
+                                <tr>
+                                    <th>Naam</th>
+                                    <th>Discipline</th>
+                                    <th>Acties</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
                     </section>
                 </div>
             </div>
@@ -143,6 +175,19 @@
             <div class="modal-buttons">
                 <button class="btn-ja" onclick="bevestigVerwijderen()">JA</button>
                 <button class="btn-nee" onclick="sluitModal()">NEE</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="archive-modal" class="modal-overlay hidden no-print">
+        <div class="modal-content">
+            <h3 style="margin-top: 0;">Persoon Archiveren</h3>
+            <p>Weet je zeker dat je deze persoon wil archiveren?</p>
+            <p style="font-size: 13px; color: #555;">Ze verdwijnen uit de keuzelijsten, maar oude sessies blijven gewoon bewaard voor de administratie.</p>
+            <p id="archive-info" style="font-weight: bold; margin: 15px 0; color: #2c3e50; background: #ecf0f1; padding: 10px; border-radius: 4px;"></p>
+            <div class="modal-buttons">
+                <button class="btn-ja" onclick="bevestigArchiveren()">JA</button>
+                <button class="btn-nee" onclick="sluitArchiveModal()">NEE</button>
             </div>
         </div>
     </div>

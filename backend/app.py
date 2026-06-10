@@ -26,9 +26,8 @@ def home():
     return render_template('index.html')
 
 # ==========================================
-# API ROUTES
+# THERAPEUTEN ROUTES
 # ==========================================
-
 @app.route('/api/therapeuten', methods=['GET'])
 def get_therapeuten():
     try:
@@ -57,12 +56,41 @@ def add_therapeut():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/therapeuten/<int:id>', methods=['PUT'])
+def update_therapeut(id):
+    try:
+        data = request.get_json()
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE therapeuten SET voornaam=%s, achternaam=%s, discipline=%s WHERE id=%s", 
+                           (data['voornaam'], data['achternaam'], data['discipline'], id))
+        connection.commit()
+        connection.close()
+        return jsonify({"bericht": "Therapeut gewijzigd!"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/therapeuten/<int:id>/archive', methods=['PUT'])
+def archive_therapeut(id):
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE therapeuten SET actief=FALSE WHERE id=%s", (id,))
+        connection.commit()
+        connection.close()
+        return jsonify({"bericht": "Therapeut gearchiveerd!"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ==========================================
+# PATIËNTEN ROUTES
+# ==========================================
 @app.route('/api/patienten', methods=['GET'])
 def get_patienten():
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            cursor.execute("SELECT * FROM patienten ORDER BY voornaam, achternaam")
+            cursor.execute("SELECT * FROM patienten WHERE actief = TRUE ORDER BY voornaam, achternaam")
             patienten = cursor.fetchall()
         connection.close()
         return jsonify(patienten)
@@ -88,6 +116,36 @@ def add_patient():
         return jsonify({"bericht": "Patiënt succesvol toegevoegd!"}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/patienten/<int:id>', methods=['PUT'])
+def update_patient(id):
+    try:
+        data = request.get_json()
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE patienten SET voornaam=%s, achternaam=%s, geboortedatum=%s WHERE id=%s", 
+                           (data['voornaam'], data['achternaam'], data['geboortedatum'], id))
+        connection.commit()
+        connection.close()
+        return jsonify({"bericht": "Patiënt gewijzigd!"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/patienten/<int:id>/archive', methods=['PUT'])
+def archive_patient(id):
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE patienten SET actief=FALSE WHERE id=%s", (id,))
+        connection.commit()
+        connection.close()
+        return jsonify({"bericht": "Patiënt gearchiveerd!"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ==========================================
+# SESSIES ROUTES
+# ==========================================
 
 @app.route('/api/sessies', methods=['GET'])
 def get_sessies():
@@ -98,7 +156,8 @@ def get_sessies():
         connection = get_db_connection()
         with connection.cursor() as cursor:
             sql = """
-                SELECT s.id, s.patient_id, p.voornaam, p.achternaam, t.naam as therapeut, 
+                SELECT s.id, s.patient_id, p.voornaam, p.achternaam, 
+                       CONCAT(t.voornaam, ' ', t.achternaam) as therapeut, 
                        s.datum_tijd, s.bedrag, s.betaald, s.betaalmethode
                 FROM sessies s
                 JOIN patienten p ON s.patient_id = p.id

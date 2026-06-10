@@ -13,12 +13,19 @@ document.addEventListener('DOMContentLoaded', () => {
     stelAutocompleteIn();
 });
 
+let betaalGrafiek = null; // Variabele om de grafiek te bewaren
+
 function wisselTab(tab) {
     document.querySelectorAll('.tab-sectie').forEach(el => el.classList.add('hidden'));
     document.querySelectorAll('.tab-knoppen button').forEach(el => el.classList.remove('actief'));
     
     document.getElementById(`tab-${tab}`).classList.remove('hidden');
     document.getElementById(`btn-${tab}`).classList.add('actief');
+    
+    // Als we naar statistieken gaan, laden we direct de verse data in
+    if (tab === 'stats') {
+        laadStatistieken();
+    }
 }
 
 // ==========================================
@@ -477,3 +484,62 @@ document.getElementById('form-therapeut').addEventListener('submit', async (e) =
         setTimeout(() => document.getElementById('msg-therapeut').innerText = "", 3000);
     }
 });
+
+// ==========================================
+// STATISTIEKEN LOGICA
+// ==========================================
+async function laadStatistieken() {
+    const res = await fetch(`${API_URL}/statistieken`);
+    const data = await res.json();
+    
+    // 1. Bouw de lijst voor Therapeuten (Deze maand)
+    const tbody = document.querySelector('#tabel-stats-therapeuten tbody');
+    tbody.innerHTML = '';
+    
+    if (data.therapeuten_deze_maand.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:#7f8c8d;">Nog geen sessies gedraaid deze maand.</td></tr>';
+    } else {
+        data.therapeuten_deze_maand.forEach(t => {
+            tbody.innerHTML += `
+            <tr>
+                <td style="font-weight: bold;">${t.voornaam} ${t.achternaam}</td>
+                <td>${t.aantal} sessie(s)</td>
+            </tr>`;
+        });
+    }
+
+    // 2. Teken de Chart.js Taartdiagram voor betaalmethodes
+    const ctx = document.getElementById('betaalChart').getContext('2d');
+    
+    // Verwijder de oude grafiek als hij bestaat (om zweef-bugs te voorkomen)
+    if (betaalGrafiek) {
+        betaalGrafiek.destroy();
+    }
+    
+    // Haal de waardes op (standaard op 0 als er nog niets is)
+    let cashAantal = 0;
+    let bancAantal = 0;
+    
+    data.betalingen.forEach(b => {
+        if (b.betaalmethode === 'Cash') cashAantal = b.aantal;
+        if (b.betaalmethode === 'Bancontact') bancAantal = b.aantal;
+    });
+
+    betaalGrafiek = new Chart(ctx, {
+        type: 'doughnut', // Doughnut is een moderne taartdiagram met een gat in het midden
+        data: {
+            labels: ['Bancontact', 'Cash'],
+            datasets: [{
+                data: [bancAantal, cashAantal],
+                backgroundColor: ['#3498db', '#2ecc71'], // Blauw voor Bancontact, Groen voor Cash
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+}

@@ -236,5 +236,42 @@ def delete_sessie(sessie_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# ==========================================
+# STATISTIEKEN ROUTE
+# ==========================================
+@app.route('/api/statistieken', methods=['GET'])
+def get_statistieken():
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            # 1. Verdeling Cash vs Bancontact (Alle tijd)
+            cursor.execute("""
+                SELECT betaalmethode, COUNT(*) as aantal 
+                FROM sessies 
+                WHERE betaalmethode IN ('Cash', 'Bancontact') 
+                GROUP BY betaalmethode
+            """)
+            betaal_data = cursor.fetchall()
+            
+            # 2. Sessies per therapeut (DEZE MAAND)
+            cursor.execute("""
+                SELECT t.voornaam, t.achternaam, COUNT(s.id) as aantal
+                FROM sessies s
+                JOIN therapeuten t ON s.therapeut_id = t.id
+                WHERE MONTH(s.datum_tijd) = MONTH(CURRENT_DATE()) 
+                  AND YEAR(s.datum_tijd) = YEAR(CURRENT_DATE())
+                GROUP BY t.id
+                ORDER BY aantal DESC
+            """)
+            therapeut_data = cursor.fetchall()
+
+        connection.close()
+        return jsonify({
+            "betalingen": betaal_data,
+            "therapeuten_deze_maand": therapeut_data
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

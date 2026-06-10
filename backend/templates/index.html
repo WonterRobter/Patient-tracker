@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eetstudio - Dashboard</title>
+    <title>De Eetstudio - Dashboard</title>
     <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <header>
-        <h1>Eetstudio</h1>
+        <h1>De Eetstudio</h1>
         <div class="tab-knoppen">
-            <button id="btn-home" class="actief" onclick="wisselTab('home')">Home (Sessies)</button>
-            <button id="btn-admin" onclick="wisselTab('admin')">Admin (Beheer)</button>
+            <button id="btn-home" class="actief" onclick="wisselTab('home')"> Sessies</button>
+            <button id="btn-stats" onclick="wisselTab('stats')">Statistieken</button>
+            <button id="btn-admin" onclick="wisselTab('admin')">Beheer</button>
         </div>
     </header>
 
@@ -94,6 +96,34 @@
                     <tbody></tbody>
                 </table>
             </section>
+        </div>
+
+        <div id="tab-stats" class="tab-sectie hidden">
+            <div class="kolom-container">
+                <div class="kolom">
+                    <section class="card" style="text-align: center;">
+                        <h2>Betaalmethodes (Totaal)</h2>
+                        <div style="max-width: 300px; margin: 0 auto;">
+                            <canvas id="betaalChart"></canvas>
+                        </div>
+                    </section>
+                </div>
+                <div class="kolom">
+                    <section class="card">
+                        <h2>Sessies per Therapeut (Deze Maand)</h2>
+                        <table id="tabel-stats-therapeuten" style="margin-top: 20px;">
+                            <thead>
+                                <tr>
+                                    <th>Therapeut</th>
+                                    <th>Aantal Sessies</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                </tbody>
+                        </table>
+                    </section>
+                </div>
+            </div>
         </div>
 
         <div id="tab-admin" class="tab-sectie hidden">

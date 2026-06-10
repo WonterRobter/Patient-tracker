@@ -56,8 +56,6 @@ def add_therapeut():
         return jsonify({"bericht": "Therapeut succesvol toegevoegd!"}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-
 
 @app.route('/api/patienten', methods=['GET'])
 def get_patienten():

@@ -1,94 +1,278 @@
-/* --- BASIS & LAYOUT --- */
+/* ==========================================================================
+   1. KLEURENPALET DE EETSTUDIO
+   ========================================================================== */
+:root {
+    --eet-rood: #F21D2F;
+    --eet-roze: #D9145C;
+    --eet-groen: #5FBF50;
+    --eet-oranje: #F26E22;
+    --eet-grijs: #F2F2F2;
+    --tekst-donker: #333333;
+    
+    /* Extra lichte varianten voor achtergronden en focus effecten */
+    --eet-groen-licht: rgba(95, 191, 80, 0.1); 
+    --eet-roze-licht: rgba(217, 20, 92, 0.05);
+    --eet-blauw-licht: #e8f4f8; 
+}
+
+/* ==========================================================================
+   2. BASIS & LAYOUT
+   ========================================================================== */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f4f7f6;
-    color: #333;
+    background-color: var(--eet-grijs); 
+    color: var(--tekst-donker);
     margin: 0;
-    padding: 20px;
+    padding: 0; 
 }
 
-header { text-align: center; margin-bottom: 20px; }
-
-.tab-knoppen { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
-.tab-knoppen button { 
-    padding: 10px 20px; font-size: 16px; cursor: pointer;
-    background: #e0e6ed; border: 1px solid #cbd5e1; border-radius: 5px; color: #333;
-}
-.tab-knoppen button.actief { background: #2c3e50; color: white; font-weight: bold; }
-
-/* Grid/Flex voor de layout */
-.tab-sectie { max-width: 1200px; margin: 0 auto; }
+/* Flexbox containers voor de lay-out */
+.tab-sectie { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 .kolom-container { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px; }
 .kolom { flex: 1; min-width: 320px; }
 
-/* Cards */
-.card {
-    background: white; padding: 20px; border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+/* ==========================================================================
+   3. DE NAVIGATIEBALK (HEADER)
+   ========================================================================== */
+.app-header {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    background-color: white;
+    padding: 10px 40px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08); 
+    margin-bottom: 30px;
+    border-bottom: 3px solid var(--eet-rood); 
 }
-.opzoek-card { background-color: #e8f4f8; border-left: 4px solid #3498db; }
 
-/* NIEUW: Maak de Admin kaarten exact even hoog */
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo-img {
+    height: 50px; 
+    width: auto;
+}
+
+.logo-container h1 {
+    margin: 0;
+    color: var(--eet-rood);
+    font-size: 26px;
+    letter-spacing: 1px;
+}
+
+.tab-knoppen { 
+    display: flex; 
+    gap: 15px; 
+}
+
+.tab-knoppen button { 
+    padding: 10px 20px; 
+    font-size: 16px; 
+    cursor: pointer;
+    background: transparent; 
+    border: none; 
+    color: var(--tekst-donker);
+    font-weight: 600;
+    border-radius: 5px;
+    transition: all 0.2s ease-in-out;
+}
+
+.tab-knoppen button:hover {
+    color: var(--eet-oranje);
+    background: rgba(242, 110, 34, 0.1); 
+}
+
+.tab-knoppen button.actief { 
+    background: var(--eet-rood); 
+    color: white; 
+    box-shadow: 0 4px 6px rgba(242, 29, 47, 0.3);
+}
+
+/* ==========================================================================
+   4. CARDS (DE WITTE VAKKEN)
+   ========================================================================== */
+.card {
+    background: white; 
+    padding: 25px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+    border-top: 4px solid var(--eet-roze); 
+}
+
+/* Specifieke styling voor de input kaarten */
+.registratie-card {
+    background-color: var(--eet-groen-licht);
+    border-top: 4px solid var(--eet-groen);
+}
+
+.opzoek-card { 
+    background-color: var(--eet-blauw-licht); 
+    border-top: 4px solid #3498db;
+    border-left: none; 
+}
+
+/* Flexbox voor de admin kaarten (gelijke hoogte) */
 .card-flex { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }
 .card-flex form { flex-grow: 1; display: flex; flex-direction: column; }
 .card-flex button[type="submit"] { margin-top: auto; }
 
-/* Formulieren */
-form { display: flex; flex-direction: column; gap: 8px; }
-label { font-size: 14px; font-weight: bold; color: #555; margin-top: 5px; }
-input, select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px; }
-button { background: #27ae60; color: white; border: none; padding: 12px; margin-top: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; }
-button:hover { background: #219653; }
+/* ==========================================================================
+   5. FORMULIEREN & INPUTS
+   ========================================================================== */
+form { display: flex; flex-direction: column; gap: 12px; }
+label { font-size: 14px; font-weight: bold; color: var(--eet-roze); margin-top: 5px; }
 
-/* Tabellen */
-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 15px; }
-th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+input, select { 
+    padding: 12px; 
+    border: 2px solid #ddd; 
+    border-radius: 8px; 
+    font-size: 15px; 
+    transition: all 0.3s ease;
+}
 
-.bericht { color: #27ae60; font-weight: bold; margin-top: 10px; }
-.foutmelding { color: #e74c3c; font-weight: bold; margin-top: 10px; }
-.teller-vak { margin-top: 15px; font-weight: bold; font-size: 16px; color: #2c3e50; }
+/* De groene gloed als je in een veld klikt */
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--eet-groen);
+    box-shadow: 0 0 8px rgba(95, 191, 80, 0.3);
+}
+
+/* ==========================================================================
+   6. KNOPPEN (BUTTONS)
+   ========================================================================== */
+button { 
+    background: var(--eet-groen); 
+    color: white; 
+    border: none; 
+    padding: 14px; 
+    margin-top: 10px; 
+    border-radius: 8px; 
+    font-weight: bold; 
+    font-size: 16px;
+    cursor: pointer; 
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px rgba(95, 191, 80, 0.2);
+}
+
+button:hover { 
+    background: #4ca33e; 
+    transform: translateY(-2px); 
+    box-shadow: 0 6px 12px rgba(95, 191, 80, 0.3);
+}
+
+/* Uitzonderingen voor de Download knoppen */
+.btn-download-csv { background-color: var(--eet-oranje); box-shadow: 0 4px 6px rgba(242, 110, 34, 0.2); }
+.btn-download-csv:hover { background-color: #d85a14; }
+
+.btn-download-pdf { background-color: #7f8c8d; box-shadow: 0 4px 6px rgba(127, 140, 141, 0.2); }
+.btn-download-pdf:hover { background-color: #6c7a7d; }
+
+/* ==========================================================================
+   7. TABELLEN
+   ========================================================================== */
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 15px; 
+    font-size: 15px; 
+    background-color: white;
+    border-radius: 6px;
+    overflow: hidden; 
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05); 
+}
+
+th { 
+    background-color: var(--eet-groen-licht); 
+    color: var(--tekst-donker);
+    padding: 12px 15px; 
+    text-align: left; 
+    border-bottom: 2px solid var(--eet-groen); 
+}
+
+td { 
+    padding: 12px 15px; 
+    border-bottom: 1px solid #eee; 
+    vertical-align: middle;
+}
+
+tbody tr:nth-child(even) { background-color: var(--eet-grijs); }
+tbody tr:hover { background-color: rgba(242, 110, 34, 0.08); }
+
+td button, td select { margin: 0; }
+
+/* Status tekst kleurtjes in de tabel */
+.status-betaald { color: var(--eet-groen); font-weight: bold; }
+.status-onbetaald { color: var(--eet-rood); font-weight: bold; }
+
+/* ==========================================================================
+   8. ALGEMENE KLASSEN & MELDINGEN
+   ========================================================================== */
+.bericht { color: var(--eet-groen); font-weight: bold; margin-top: 10px; }
+.foutmelding { color: var(--eet-rood); font-weight: bold; margin-top: 10px; }
+.teller-vak { margin-top: 15px; font-weight: bold; font-size: 16px; color: var(--tekst-donker); }
 .hidden { display: none !important; }
 
-/* --- CUSTOM AUTOCOMPLETE --- */
+/* ==========================================================================
+   9. CUSTOM AUTOCOMPLETE (De Google Zoekbalk)
+   ========================================================================== */
 .autocomplete-wrapper { position: relative; display: flex; align-items: center; width: 100%; }
 .autocomplete-wrapper input { width: 100%; padding-right: 35px; }
 .wis-knop { position: absolute; right: 10px; cursor: pointer; color: #7f8c8d; font-size: 18px; font-weight: bold; user-select: none; }
-.wis-knop:hover { color: #e74c3c; }
-.autocomplete-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; border-top: none; border-radius: 0 0 4px 4px; max-height: 250px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.wis-knop:hover { color: var(--eet-rood); }
+
+.autocomplete-dropdown { 
+    position: absolute; top: 100%; left: 0; right: 0; 
+    background: white; border: 1px solid #ccc; border-top: none; 
+    border-radius: 0 0 4px 4px; max-height: 250px; overflow-y: auto; 
+    z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+}
 .autocomplete-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 15px; }
-.autocomplete-item:hover { background-color: #3498db; color: white; }
+.autocomplete-item:hover { background-color: var(--eet-groen); color: white; }
 .autocomplete-item:last-child { border-bottom: none; }
 
-/* --- MODAL POPUP (VUILBAK) --- */
+/* ==========================================================================
+   10. MODAL POPUPS (Vuilbak & Archief)
+   ========================================================================== */
 .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.3); /* Lichter gemaakt om de tabel te blijven zien */
-    display: flex; justify-content: center; align-items: flex-start; /* Naar boven geschoven */
+    background: rgba(0,0,0,0.3); 
+    display: flex; justify-content: center; align-items: flex-start; 
     padding-top: 80px; 
     z-index: 2000;
 }
 .modal-content {
-    background: white; padding: 25px; border-radius: 8px; width: 400px; max-width: 90%; 
+    background: white; padding: 25px; border-radius: 12px; width: 400px; max-width: 90%; 
     text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    border-top: 4px solid var(--eet-rood);
 }
 .modal-buttons { display: flex; justify-content: space-around; margin-top: 20px; }
-.btn-ja { background: #e74c3c; width: 45%; }
-.btn-ja:hover { background: #c0392b; }
-.btn-nee { background: #7f8c8d; width: 45%; }
-.btn-nee:hover { background: #95a5a6; }
 
-/* --- PRINT & PDF OPMAAK --- */
+/* Overschrijf standaard knopstijl voor de modal */
+.btn-ja { background: var(--eet-rood); width: 45%; padding: 10px; box-shadow: none; }
+.btn-ja:hover { background: #d31627; transform: none; box-shadow: none; }
+
+.btn-nee { background: #7f8c8d; width: 45%; padding: 10px; box-shadow: none; }
+.btn-nee:hover { background: #6c7a7d; transform: none; box-shadow: none; }
+
+/* ==========================================================================
+   11. PRINT & PDF OPMAAK
+   ========================================================================== */
 @media print {
-    /* Verberg ALLES met de klasse no-print (Dus ook de formulieren erboven!) */
     .no-print, header, .tab-knoppen { display: none !important; }
     
     body { padding: 0; background-color: white; }
     #tab-home { display: block; max-width: none; }
-    .card { box-shadow: none; padding: 0; margin: 0; }
+    .card { box-shadow: none; padding: 0; margin: 0; border: none; }
     
-    table { width: 100%; border-collapse: collapse; border: 1px solid #000; }
-    th, td { border: 1px solid #000; padding: 8px; color: #000; }
+    table { width: 100%; border-collapse: collapse; border: 1px solid #000; margin-top: 0; }
+    th { background-color: transparent; border-bottom: 2px solid #000; color: #000; padding: 6px; }
+    td { border: 1px solid #000; padding: 6px; color: #000; }
     
-    /* Verberg de actie-knoppen in de tabel bij printen */
+    tbody tr:nth-child(even), tbody tr:hover { background-color: transparent; }
+    
+    .status-betaald, .status-onbetaald { color: #000; font-weight: normal; }
     .actie-knoppen { display: none !important; }
 }

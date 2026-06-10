@@ -3,24 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>De Eetstudio - Dashboard</title>
+    <title>Eetstudio - Dashboard</title>
+    <link rel="icon" type="image/png" href="/static/logo.png">
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <header>
-        <h1>De Eetstudio</h1>
-        <div class="tab-knoppen">
-            <button id="btn-home" class="actief" onclick="wisselTab('home')"> Sessies</button>
-            <button id="btn-stats" onclick="wisselTab('stats')">Statistieken</button>
-            <button id="btn-admin" onclick="wisselTab('admin')">Beheer</button>
+    <header class="app-header no-print">
+        <div class="logo-container">
+            <img src="/static/logo.png" alt="De Eetstudio Logo" class="logo-img">
+            <h1>Eetstudio</h1>
         </div>
+        <nav class="tab-knoppen">
+            <button id="btn-home" class="actief" onclick="wisselTab('home')">Sessies</button>
+            <button id="btn-admin" onclick="wisselTab('admin')">Beheer</button>
+            <button id="btn-stats" onclick="wisselTab('stats')">Statistieken</button>
+        </nav>
     </header>
 
     <main>
         <div id="tab-home" class="tab-sectie">
             <div class="no-print" style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
-                <section class="card">
+                <section class="card registratie-card">
                     <h2>Nieuwe Sessie Registreren</h2>
                     <form id="form-sessie">
                         <label>Patiënt Zoeken & Selecteren:</label>
@@ -79,8 +83,8 @@
                 <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px;">
                     <h2 style="margin: 0;">Sessie Overzicht</h2>
                     <div id="download-knoppen" class="hidden no-print" style="display: flex; gap: 10px; align-items: flex-end;">
-                        <button onclick="downloadRapport()" style="background-color: #2980b9; padding: 6px 12px; font-size: 13px; margin: 0;">📥 Download CSV</button>
-                        <button onclick="window.print()" style="background-color: #7f8c8d; padding: 6px 12px; font-size: 13px; margin: 0;">📄 Download PDF (Browser)</button>
+                        <button class="btn-download-csv" onclick="downloadRapport()">Download CSV</button>
+                        <button class="btn-download-pdf" onclick="window.print()">Download PDF (Browser)</button>
                     </div>
                 </div>
                 <table id="tabel-sessies">

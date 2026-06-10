@@ -328,7 +328,9 @@ async function laadSessies() {
     data.forEach(s => {
         const bedrag = parseFloat(s.bedrag).toFixed(2);
         const datum = new Date(s.datum_tijd).toLocaleDateString('nl-BE', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit'});
-        const statusTekst = s.betaald ? `Betaald (${s.betaalmethode})` : 'Nog betalen';
+        const statusKlasse = s.betaald ? 'status-betaald' : 'status-onbetaald';
+        const statusTekstLable = s.betaald ? `Betaald (${s.betaalmethode})` : 'Nog betalen';
+        const statusTekst = `<span class="${statusKlasse}">${statusTekstLable}</span>`;     
         const patientNaam = `${s.voornaam} ${s.achternaam}`;
         
         const statusHtml = `

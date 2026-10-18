@@ -43,21 +43,41 @@ window.addEventListener('DOMContentLoaded', () => {
 // ==========================================
 // INLADEN DATA (Patiënten & Therapeuten)
 // ==========================================
+// ====== ZOEKBANK FUNCTIE (Verbeterd) ======
+function zoekInAdminPatienten() {
+    const input = document.getElementById('zoek-patient-admin').value.toLowerCase().trim();
+    const rijen = document.querySelectorAll('#tabel-admin-patienten tbody tr');
+    rijen.forEach(rij => {
+        const naamSpan = rij.querySelector('td:first-child span');
+        if (naamSpan) {
+            const naam = naamSpan.innerText.toLowerCase();
+            if (naam.includes(input)) {
+                rij.style.display = '';
+            } else {
+                rij.style.display = 'none';
+            }
+        }
+    });
+}
+
+// ====== OVERZICHT INLADEN MET CORRECTE KOLOMMEN ======
 async function laadPatienten() {
     const res = await fetch(`${API_URL}/patienten`);
     allePatienten = await res.json();
     
-    // Vul de Admin Tabel
     const tbody = document.querySelector('#tabel-admin-patienten tbody');
     tbody.innerHTML = '';
     
     allePatienten.forEach(p => {
         const datum = new Date(p.geboortedatum).toLocaleDateString('nl-BE');
-        // Let op: value voor <input type="date"> MOET in YYYY-MM-DD formaat zijn
         const rawDatum = new Date(p.geboortedatum).toISOString().split('T')[0];
+        
+        const trajectUren = p.traject_uren || 0;
+        const trajectVerval = p.traject_vervaldatum ? new Date(p.traject_vervaldatum).toISOString().split('T')[0] : '';
         
         tbody.innerHTML += `
         <tr>
+            <!-- Kolom 1: Naam -->
             <td>
                 <span id="view-p-naam-${p.id}">${p.voornaam} ${p.achternaam}</span>
                 <div id="edit-p-naam-${p.id}" class="hidden" style="display: flex; gap: 5px;">
@@ -65,10 +85,20 @@ async function laadPatienten() {
                     <input id="upd-p-anaam-${p.id}" value="${p.achternaam}" style="width: 80px; padding: 2px;">
                 </div>
             </td>
+            <!-- Kolom 2: Geboortedatum -->
             <td>
                 <span id="view-p-geb-${p.id}">${datum}</span>
                 <input type="date" id="edit-p-geb-${p.id}" class="hidden" value="${rawDatum}" style="padding: 2px; width: 110px;">
             </td>
+            <!-- Kolom 3: Traject -->
+            <td>
+                <span id="view-p-traj-${p.id}">${trajectUren > 0 ? trajectUren + ' u' : 'Geen'}</span>
+                <div id="edit-p-traj-${p.id}" class="hidden" style="display: flex; flex-direction: column; gap: 2px;">
+                    <input type="number" id="upd-p-uren-${p.id}" value="${trajectUren}" style="width: 80px; padding: 2px;" placeholder="Uren">
+                    <input type="date" id="upd-p-verval-${p.id}" value="${trajectVerval}" style="width: 110px; padding: 2px; font-size:11px;" title="Geldig tot">
+                </div>
+            </td>
+            <!-- Kolom 4: Acties -->
             <td style="min-width: 100px;">
                 <div id="view-p-acties-${p.id}" class="actie-knoppen" style="display: flex; gap: 5px;">
                     <button onclick="toonBewerkAdmin('p', ${p.id})" style="padding: 4px 8px; font-size: 15px; background-color: #f39c12; border: none; border-radius: 4px; cursor: pointer; color: white;" title="Bewerken">✎</button>
@@ -157,7 +187,7 @@ async function opslaanPatient(id) {
         body: JSON.stringify(body)
     });
     laadPatienten();
-    laadSessies(); // Ververs sessies omdat de naam kan zijn gewijzigd
+    laadSessies();
 }
 
 async function opslaanTherapeut(id) {
@@ -179,7 +209,7 @@ async function opslaanTherapeut(id) {
 // ARCHIVEER LOGICA (Soft Delete)
 // ==========================================
 function openArchiveModal(type, id, naam) {
-    archiefType = type; // 'patienten' of 'therapeuten'
+    archiefType = type; 
     archiefId = id;
     document.getElementById('archive-info').innerText = naam;
     document.getElementById('archive-modal').classList.remove('hidden');
@@ -248,7 +278,11 @@ function bouwDropdown(zoekterm, dropdownId, isFilter) {
                 document.getElementById(inputId).value = div.innerText;
                 dropdown.classList.add('hidden');
                 
-                if (isFilter) laadSessies();
+                if (isFilter) {
+                    laadSessies();
+                } else {
+                    checkGratisLimiet(p.id);
+                }
             };
             dropdown.appendChild(div);
         });
@@ -260,6 +294,8 @@ function wisInputRegistratie() {
     const input = document.getElementById('input-patient-sessie');
     input.value = '';
     document.getElementById('dropdown-patient-sessie').classList.add('hidden');
+    const tellerDiv = document.getElementById('info-gratis-limiet');
+    if (tellerDiv) tellerDiv.remove();
     input.focus();
 }
 
@@ -313,65 +349,96 @@ async function laadSessies() {
     if (patientId) {
         url += `&patient_id=${patientId}`;
     } else if (getypteFilter !== "") {
-        document.querySelector('#tabel-sessies tbody').innerHTML = '<tr><td colspan="5">Geen patiënt gevonden met deze exacte naam.</td></tr>';
+        // Aangepast naar colspan 6 wegens de nieuwe Duur kolom
+        document.querySelector('#tabel-sessies tbody').innerHTML = '<tr><td colspan="6">Geen patiënt gevonden met deze exacte naam.</td></tr>';
         document.getElementById('sessie-teller').classList.add('hidden');
         return;
     }
 
-    const res = await fetch(url);
-    const data = await res.json();
-    huidigeSessies = data; 
-    
-    const tbody = document.querySelector('#tabel-sessies tbody');
-    tbody.innerHTML = '';
-    
-    const tellerVak = document.getElementById('sessie-teller');
-    const downloadKnoppen = document.getElementById('download-knoppen');
-
-    if((patientId || statusFilter !== 'alle') && data.length > 0) {
-        tellerVak.classList.remove('hidden');
-        document.getElementById('teller-getal').innerText = data.length;
-        downloadKnoppen.classList.remove('hidden'); 
-    } else {
-        tellerVak.classList.add('hidden');
-        downloadKnoppen.classList.add('hidden'); 
-    }
-    
-    data.forEach(s => {
-        const bedrag = parseFloat(s.bedrag).toFixed(2);
-        const datum = new Date(s.datum_tijd).toLocaleDateString('nl-BE', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit'});
-        const statusKlasse = s.betaald ? 'status-betaald' : 'status-onbetaald';
-        const statusTekstLable = s.betaald ? `Betaald (${s.betaalmethode})` : 'Nog betalen';
-        const statusTekst = `<span class="${statusKlasse}">${statusTekstLable}</span>`;     
-        const patientNaam = `${s.voornaam} ${s.achternaam}`;
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        huidigeSessies = data; 
         
-        const statusHtml = `
-            <div id="view-status-${s.id}" style="display: flex; align-items: center; justify-content: space-between;">
-                <span>${statusTekst}</span>
-                <div class="actie-knoppen" style="display: flex; gap: 5px;">
-                    <button onclick="toonBewerkStatus(${s.id})" style="padding: 4px 8px; font-size: 15px; background-color: #f39c12; border: none; border-radius: 4px; cursor: pointer; color: white;" title="Bewerk de betaalstatus">✎</button>
-                    <button onclick="openDeleteModal(${s.id}, '${datum}', '${patientNaam}', '${s.therapeut}')" style="padding: 4px 8px; font-size: 15px; background-color: #e74c3c; border: none; border-radius: 4px; cursor: pointer; color: white;" title="Verwijder sessie">🗑</button>
-                </div>
-            </div>
-            <div id="edit-status-${s.id}" class="hidden" style="display: flex; gap: 5px; align-items: center;">
-                <select id="update-methode-${s.id}" style="padding: 4px; font-size: 12px; width: auto;">
-                    <option value="onbetaald" ${!s.betaald ? 'selected' : ''}>Nog betalen</option>
-                    <option value="Cash" ${s.betaald && s.betaalmethode === 'Cash' ? 'selected' : ''}>Cash</option>
-                    <option value="Bancontact" ${s.betaald && s.betaalmethode === 'Bancontact' ? 'selected' : ''}>Bancontact</option>
-                </select>
-                <button onclick="opslaanBetaling(${s.id})" style="padding: 4px 8px; font-size: 12px; background-color: #27ae60; margin-top: 0;">Opslaan</button>
-                <button onclick="annuleerBewerkStatus(${s.id})" style="padding: 4px 8px; font-size: 12px; background-color: #7f8c8d; margin-top: 0;">Annuleer</button>
-            </div>
-        `;
+        const tbody = document.querySelector('#tabel-sessies tbody');
+        tbody.innerHTML = '';
+        
+        const tellerVak = document.getElementById('sessie-teller');
+        const downloadKnoppen = document.getElementById('download-knoppen');
 
-        tbody.innerHTML += `<tr>
-            <td>${datum}</td>
-            <td>${patientNaam}</td>
-            <td>${s.therapeut}</td>
-            <td>€ ${bedrag}</td>
-            <td style="min-width: 250px;">${statusHtml}</td>
-        </tr>`;
-    });
+        if((patientId || statusFilter !== 'alle') && data.length > 0) {
+            tellerVak.classList.remove('hidden');
+            document.getElementById('teller-getal').innerText = data.length;
+            downloadKnoppen.classList.remove('hidden'); 
+        } else {
+            tellerVak.classList.add('hidden');
+            downloadKnoppen.classList.add('hidden'); 
+        }
+        
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nog geen sessies gevonden.</td></tr>';
+            return;
+        }
+
+        data.forEach(s => {
+            const bedrag = parseFloat(s.bedrag).toFixed(2);
+            
+            // FIX: Gebruik direct de database tekst. Nooit meer +2 uur tijdzone bugs!
+            const datum = s.weergave_datum;
+            
+            // Bereken de duur mooi naar tekst (bijv. 90 minuten -> 1u 30m)
+            const duurMin = s.duur_minuten || 0;
+            const dUur = Math.floor(duurMin / 60);
+            const dMin = duurMin % 60;
+            const duurTekst = dUur > 0 ? `${dUur}u ${dMin > 0 ? dMin+'m' : ''}` : `${dMin}m`;
+
+            let statusKlasse = 'status-onbetaald';
+            let statusTekstLable = 'Nog betalen';
+
+            if (s.betaalmethode === 'Gratis traject') {
+                statusKlasse = 'status-gratis';
+                statusTekstLable = 'Gratis traject (Vergoed)';
+            } else if (s.betaald) {
+                statusKlasse = 'status-betaald';
+                statusTekstLable = `Betaald (${s.betaalmethode})`;
+            }
+
+            const statusTekst = `<span class="${statusKlasse}" style="${s.betaalmethode === 'Gratis traject' ? 'color: #3498db; font-weight: bold;' : ''}">${statusTekstLable}</span>`;    
+            const patientNaam = `${s.voornaam} ${s.achternaam}`;
+            
+            const statusHtml = `
+                <div id="view-status-${s.id}" style="display: flex; align-items: center; justify-content: space-between;">
+                    <span>${statusTekst}</span>
+                    <div class="actie-knoppen" style="display: flex; gap: 5px;">
+                        <button onclick="toonBewerkStatus(${s.id})" style="padding: 4px 8px; font-size: 15px; background-color: #f39c12; border: none; border-radius: 4px; cursor: pointer; color: white;" title="Bewerk de betaalstatus">✎</button>
+                        <button onclick="openDeleteModal(${s.id}, '${datum}', '${patientNaam}', '${s.therapeut}')" style="padding: 4px 8px; font-size: 15px; background-color: #e74c3c; border: none; border-radius: 4px; cursor: pointer; color: white;" title="Verwijder sessie">🗑</button>
+                    </div>
+                </div>
+                <div id="edit-status-${s.id}" class="hidden" style="display: flex; gap: 5px; align-items: center;">
+                    <select id="update-methode-${s.id}" style="padding: 4px; font-size: 12px; width: auto;">
+                        <option value="onbetaald" ${!s.betaald && s.betaalmethode !== 'Gratis traject' ? 'selected' : ''}>Nog betalen</option>
+                        <option value="Cash" ${s.betaald && s.betaalmethode === 'Cash' ? 'selected' : ''}>Cash</option>
+                        <option value="Bancontact" ${s.betaald && s.betaalmethode === 'Bancontact' ? 'selected' : ''}>Bancontact</option>
+                        <option value="Gratis traject" ${s.betaalmethode === 'Gratis traject' ? 'selected' : ''}>Gratis traject</option>
+                    </select>
+                    <button onclick="opslaanBetaling(${s.id})" style="padding: 4px 8px; font-size: 12px; background-color: #27ae60; margin-top: 0;">Opslaan</button>
+                    <button onclick="annuleerBewerkStatus(${s.id})" style="padding: 4px 8px; font-size: 12px; background-color: #7f8c8d; margin-top: 0;">Annuleer</button>
+                </div>
+            `;
+
+            // DEZE REGEL IS CRUCIAAL: Hij voegt de rij inclusief duurTekst toe (6 kolommen totaal!)
+            tbody.innerHTML += `<tr>
+                <td>${datum}</td>
+                <td>${patientNaam}</td>
+                <td>${s.therapeut}</td>
+                <td><strong>${duurTekst}</strong></td>
+                <td>€ ${bedrag}</td>
+                <td style="min-width: 250px;">${statusHtml}</td>
+            </tr>`;
+        });
+    } catch (err) {
+        console.error("Fout bij laden van de sessies:", err);
+    }
 }
 
 function toonBewerkStatus(id) {
@@ -418,7 +485,10 @@ document.getElementById('form-sessie').addEventListener('submit', async (e) => {
     e.preventDefault();
     const getypteNaam = document.getElementById('input-patient-sessie').value;
     const patient_id = vindPatientId(getypteNaam, false);
-    
+    const uren = parseInt(document.getElementById('sessie-u').value) || 0;
+    const minuten = parseInt(document.getElementById('sessie-min').value) || 0;
+    const totaalMinuten = (uren * 60) + minuten;
+
     if (!patient_id) {
         alert("Selecteer a.u.b. een geldige patiënt uit de voorgestelde lijst.");
         return;
@@ -427,7 +497,8 @@ document.getElementById('form-sessie').addEventListener('submit', async (e) => {
     const body = {
         patient_id: patient_id,
         therapeut_id: document.getElementById('select-therapeut').value,
-        datum_tijd: document.getElementById('datum-tijd').value,
+        datum_tijd: document.getElementById('datum-tijd').value, // Zuivere string sturen i.v.m. tijdzones
+        duur_minuten: totaalMinuten,
         bedrag: document.getElementById('bedrag').value,
         betaal_status: document.getElementById('betaal-status').value
     };
@@ -455,7 +526,9 @@ document.getElementById('form-patient').addEventListener('submit', async (e) => 
     const body = {
         voornaam: document.getElementById('voornaam').value,
         achternaam: document.getElementById('achternaam').value,
-        geboortedatum: document.getElementById('geboortedatum').value
+        geboortedatum: document.getElementById('geboortedatum').value,
+        traject_uren: document.getElementById('traject-uren') ? document.getElementById('traject-uren').value : 0,
+        traject_vervaldatum: document.getElementById('traject-vervaldatum') ? (document.getElementById('traject-vervaldatum').value || null) : null
     };
     
     const res = await fetch(`${API_URL}/patienten`, {
@@ -506,7 +579,6 @@ async function laadStatistieken() {
     const res = await fetch(`${API_URL}/statistieken`);
     const data = await res.json();
     
-    // 1. Bouw de lijst voor Therapeuten (Deze maand)
     const tbody = document.querySelector('#tabel-stats-therapeuten tbody');
     tbody.innerHTML = '';
     
@@ -522,15 +594,11 @@ async function laadStatistieken() {
         });
     }
 
-    // 2. Teken de Chart.js Taartdiagram voor betaalmethodes
     const ctx = document.getElementById('betaalChart').getContext('2d');
-    
-    // Verwijder de oude grafiek als hij bestaat (om zweef-bugs te voorkomen)
     if (betaalGrafiek) {
         betaalGrafiek.destroy();
     }
     
-    // Haal de waardes op (standaard op 0 als er nog niets is)
     let cashAantal = 0;
     let bancAantal = 0;
     
@@ -540,12 +608,12 @@ async function laadStatistieken() {
     });
 
     betaalGrafiek = new Chart(ctx, {
-        type: 'doughnut', // Doughnut is een moderne taartdiagram met een gat in het midden
+        type: 'doughnut',
         data: {
             labels: ['Bancontact', 'Cash'],
             datasets: [{
                 data: [bancAantal, cashAantal],
-                backgroundColor: ['#3498db', '#2ecc71'], // Blauw voor Bancontact, Groen voor Cash
+                backgroundColor: ['#3498db', '#2ecc71'],
                 hoverOffset: 4
             }]
         },
@@ -556,4 +624,63 @@ async function laadStatistieken() {
             }
         }
     });
+}
+
+// ==========================================
+// GRATIS TRAJECT / LIMIET TELLER
+// ==========================================
+async function checkGratisLimiet(patientId) {
+    if (!patientId) return;
+    try {
+        // 1. Haal patiëntgegevens op voor hun traject-limiet
+        const pRes = await fetch(`${API_URL}/patienten`);
+        const allePat = await pRes.json();
+        const patient = allePat.find(p => p.id === patientId);
+        
+        const maxUren = patient.traject_uren || 0;
+        const maxMinuten = maxUren * 60;
+
+        // 2. Haal de verbruikte gratis sessies op
+        const sRes = await fetch(`${API_URL}/sessies?patient_id=${patientId}&status=Gratis traject`);
+        const sessies = await sRes.json();
+        
+        // Tel alle minuten van de gratis sessies bij elkaar op
+        let verbruikteMinuten = 0;
+        sessies.forEach(s => { verbruikteMinuten += (s.duur_minuten || 60); });
+
+        // Reken terug naar uren en minuten voor weergave
+        const verbruiktU = Math.floor(verbruikteMinuten / 60);
+        const verbruiktM = verbruikteMinuten % 60;
+        
+        const overMinuten = maxMinuten - verbruikteMinuten;
+        const overU = Math.floor(overMinuten / 60);
+        const overM = overMinuten % 60;
+
+        let tellerDiv = document.getElementById('info-gratis-limiet');
+        if (!tellerDiv) {
+            tellerDiv = document.createElement('div');
+            tellerDiv.id = 'info-gratis-limiet';
+            tellerDiv.style.fontSize = '14px';
+            tellerDiv.style.marginTop = '8px';
+            document.getElementById('input-patient-sessie').parentNode.appendChild(tellerDiv);
+        }
+        
+        if (maxUren === 0) {
+            tellerDiv.innerText = `💡 Deze patiënt heeft geen actief gratis traject geregistreerd.`;
+            tellerDiv.style.color = '#7f8c8d';
+        } else {
+            tellerDiv.innerText = `💡 Gratis Traject (${maxUren}u): Al ${verbruiktU}u ${verbruiktM}min verbruikt. Nog ${overU}u ${overM}min over.`;
+            
+            if (overMinuten <= 0) {
+                tellerDiv.style.color = '#e74c3c';
+                tellerDiv.innerText = `⚠️ Gratis Traject (${maxUren}u): Limiet is bereikt of overschreden!`;
+            } else if (overMinuten <= 120) {
+                tellerDiv.style.color = '#f39c12'; // Oranje als ze bijna aan de limiet zitten
+            } else {
+                tellerDiv.style.color = '#27ae60';
+            }
+        }
+    } catch (err) {
+        console.error("Kon gratis limiet niet berekenen:", err);
+    }
 }

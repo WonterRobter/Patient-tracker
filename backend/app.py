@@ -101,16 +101,15 @@ def get_patienten():
 def add_patient():
     try:
         data = request.get_json()
-        voornaam, achternaam, geboortedatum = data['voornaam'], data['achternaam'], data['geboortedatum']
+        voornaam, achternaam = data['voornaam'], data['achternaam']
+        geboortedatum = data['geboortedatum']
+        traject_uren = data.get('traject_uren', 0)
+        traject_vervaldatum = data.get('traject_vervaldatum') or None # None als het leeg is
 
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            cursor.execute("SELECT id FROM patienten WHERE voornaam = %s AND achternaam = %s AND geboortedatum = %s", (voornaam, achternaam, geboortedatum))
-            if cursor.fetchone():
-                connection.close()
-                return jsonify({"error": "Deze patiënt staat al in het systeem!"}), 400
-
-            cursor.execute("INSERT INTO patienten (voornaam, achternaam, geboortedatum) VALUES (%s, %s, %s)", (voornaam, achternaam, geboortedatum))
+            cursor.execute("INSERT INTO patienten (voornaam, achternaam, geboortedatum, traject_uren, traject_vervaldatum) VALUES (%s, %s, %s, %s, %s)", 
+                           (voornaam, achternaam, geboortedatum, traject_uren, traject_vervaldatum))
         connection.commit() 
         connection.close()
         return jsonify({"bericht": "Patiënt succesvol toegevoegd!"}), 201
@@ -121,10 +120,16 @@ def add_patient():
 def update_patient(id):
     try:
         data = request.get_json()
+        t_uren = data.get('traject_uren', 0)
+        t_verval = data.get('traject_vervaldatum') or None
+
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            cursor.execute("UPDATE patienten SET voornaam=%s, achternaam=%s, geboortedatum=%s WHERE id=%s", 
-                           (data['voornaam'], data['achternaam'], data['geboortedatum'], id))
+            cursor.execute("""
+                UPDATE patienten 
+                SET voornaam=%s, achternaam=%s, geboortedatum=%s, traject_uren=%s, traject_vervaldatum=%s 
+                WHERE id=%s
+            """, (data['voornaam'], data['achternaam'], data['geboortedatum'], t_uren, t_verval, id))
         connection.commit()
         connection.close()
         return jsonify({"bericht": "Patiënt gewijzigd!"}), 200
@@ -155,10 +160,12 @@ def get_sessies():
         
         connection = get_db_connection()
         with connection.cursor() as cursor:
+            # FIX: %% gebruiken in PyMySQL én de datum perfect formatteren als 'dd/mm/yyyy uu:mm'
             sql = """
                 SELECT s.id, s.patient_id, p.voornaam, p.achternaam, 
                        CONCAT(t.voornaam, ' ', t.achternaam) as therapeut, 
-                       s.datum_tijd, s.bedrag, s.betaald, s.betaalmethode
+                       DATE_FORMAT(s.datum_tijd, '%%d/%%m/%%Y %%H:%%i') as weergave_datum,
+                       s.datum_tijd, s.duur_minuten, s.bedrag, s.betaald, s.betaalmethode
                 FROM sessies s
                 JOIN patienten p ON s.patient_id = p.id
                 JOIN therapeuten t ON s.therapeut_id = t.id
@@ -168,10 +175,13 @@ def get_sessies():
             if patient_id:
                 sql += " AND s.patient_id = %s"
                 params.append(patient_id)
+            
             if status == 'onbetaald':
-                sql += " AND s.betaald = FALSE"
+                sql += " AND s.betaald = FALSE AND (s.betaalmethode IS NULL OR s.betaalmethode != 'Gratis traject')"
             elif status == 'betaald':
                 sql += " AND s.betaald = TRUE"
+            elif status == 'Gratis traject':
+                sql += " AND s.betaalmethode = 'Gratis traject'"
                 
             sql += " ORDER BY s.datum_tijd DESC"
             
@@ -190,15 +200,18 @@ def add_sessie():
     try:
         data = request.get_json()
         patient_id, therapeut_id, datum_tijd = data['patient_id'], data['therapeut_id'], data['datum_tijd']
+        duur_minuten = data.get('duur_minuten', 60) # Nieuwe variabele
         bedrag = data.get('bedrag', 0.00)
         status = data.get('betaal_status', 'onbetaald')
+        
         betaald = status in ['Cash', 'Bancontact']
-        betaalmethode = status if betaald else None
+        betaalmethode = status if status != 'onbetaald' else None
 
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            cursor.execute("INSERT INTO sessies (patient_id, therapeut_id, datum_tijd, bedrag, betaald, betaalmethode) VALUES (%s, %s, %s, %s, %s, %s)", 
-                           (patient_id, therapeut_id, datum_tijd, bedrag, betaald, betaalmethode))
+            # AANGEPAST: duur kolom toegevoegd aan de INSERT
+            cursor.execute("INSERT INTO sessies (patient_id, therapeut_id, datum_tijd, duur_minuten, bedrag, betaald, betaalmethode) VALUES (%s, %s, %s, %s, %s, %s, %s)", 
+                           (patient_id, therapeut_id, datum_tijd, duur_minuten, bedrag, betaald, betaalmethode))
         connection.commit()
         connection.close()
         return jsonify({"bericht": "Sessie succesvol geregistreerd!"}), 201
@@ -212,9 +225,13 @@ def update_sessie(sessie_id):
         betaalmethode = data.get('betaalmethode')
         connection = get_db_connection()
         with connection.cursor() as cursor:
+            # AANGEPAST: Update logica gefixt voor Gratis traject
             if betaalmethode == 'onbetaald':
                 sql = "UPDATE sessies SET betaald = FALSE, betaalmethode = NULL WHERE id = %s"
                 cursor.execute(sql, (sessie_id,))
+            elif betaalmethode == 'Gratis traject':
+                sql = "UPDATE sessies SET betaald = FALSE, betaalmethode = %s WHERE id = %s"
+                cursor.execute(sql, (betaalmethode, sessie_id))
             else:
                 sql = "UPDATE sessies SET betaald = TRUE, betaalmethode = %s WHERE id = %s"
                 cursor.execute(sql, (betaalmethode, sessie_id))

@@ -345,3 +345,61 @@ body.dark-mode tbody tr:hover {
 .btn-darkmode:hover {
     background: #444;
 }
+
+body.dark-mode .autocomplete-dropdown {
+    background: #1e1e1e;
+    border-color: #444;
+}
+
+body.dark-mode .autocomplete-item {
+    color: #e0e0e0;
+    border-bottom-color: #2c2c2c;
+}
+
+body.dark-mode .autocomplete-item:hover {
+    background-color: var(--eet-groen);
+    color: #ffffff;
+}
+
+body.dark-mode select, 
+body.dark-mode option {
+    background-color: #2d2d2d;
+    color: #ffffff;
+}
+body.dark-mode .app-header {
+    background-color: #1e1e1e;
+    border-bottom: 3px solid var(--eet-roze);
+}
+
+body.dark-mode .app-header h1 {
+    color: var(--eet-roze);
+}
+
+body.dark-mode .tab-knoppen button {
+    color: #ffffff; /* Helder witte letters in plaats van grijs */
+    font-weight: bold;
+}
+
+body.dark-mode .tab-knoppen button:hover {
+    background: rgba(255, 255, 255, 0.15); /* Licht oplichtend effect */
+}
+
+body.dark-mode .tab-knoppen button.actief {
+    background: var(--eet-rood); 
+    color: #ffffff; 
+}
+
+.app-header {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+}
+.header-left { flex: 1; display: flex; justify-content: flex-start; }
+.header-center { flex: 2; display: flex; justify-content: center; }
+.header-right { flex: 1; display: flex; justify-content: flex-end; }
+
+/* Donkere achtergrond voor het tekstvakje van de bevestiging-modal in nachtmodus */
+body.dark-mode #confirm-sessie-info { 
+    background: #2c2c2c !important; 
+    color: #e0e0e0 !important; 
+}

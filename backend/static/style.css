@@ -398,8 +398,16 @@ body.dark-mode .tab-knoppen button.actief {
 .header-center { flex: 2; display: flex; justify-content: center; }
 .header-right { flex: 1; display: flex; justify-content: flex-end; }
 
-/* Donkere achtergrond voor het tekstvakje van de bevestiging-modal in nachtmodus */
 body.dark-mode #confirm-sessie-info { 
     background: #2c2c2c !important; 
     color: #e0e0e0 !important; 
+}
+
+body.dark-mode .modal-content {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+}
+
+body.dark-mode .modal-content h3 {
+    color: var(--eet-roze); /* Maakt de titel ("Sessie Opslaan") mooi roze in dark mode */
 }

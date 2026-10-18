@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS patienten (
     voornaam VARCHAR(100) NOT NULL,
     achternaam VARCHAR(100) NOT NULL,
     geboortedatum DATE NOT NULL,
+    traject_uren INT DEFAULT 0,
+    traject_vervaldatum DATE DEFAULT NULL,
     actief BOOLEAN DEFAULT TRUE
 );
 
@@ -22,13 +24,14 @@ CREATE TABLE IF NOT EXISTS sessies (
     patient_id INT NOT NULL,
     therapeut_id INT NOT NULL,
     datum_tijd DATETIME NOT NULL,
+    duur_minuten INT DEFAULT 60,
     bedrag DECIMAL(6,2) DEFAULT 0.00,
     betaald BOOLEAN DEFAULT FALSE,
     betaalmethode VARCHAR(20) DEFAULT NULL,
     FOREIGN KEY (patient_id) REFERENCES patienten(id) ON DELETE CASCADE,
     FOREIGN KEY (therapeut_id) REFERENCES therapeuten(id) ON DELETE CASCADE
 );
-
+/*
  -- dummy data
  INSERT INTO therapeuten (voornaam, achternaam, discipline) VALUES 
 ('Mama', 'De Eetstudio', 'Diëtist'), ('Lotte', 'Janssens', 'Diëtist'), ('Emma', 'Smet', 'Psycholoog'), 
@@ -77,3 +80,4 @@ FROM (
          (SELECT 0 AS i UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) c,
          (SELECT 0 AS i UNION SELECT 1 UNION SELECT 2) d
 ) n WHERE id > 0 AND id <= 2000;
+*/

@@ -10,23 +10,31 @@
 </head>
 <body>
     <header class="app-header no-print">
-        <div class="logo-container">
-            <img src="/static/logo.png" alt="De Eetstudio Logo" class="logo-img">
-            <h1>Eetstudio</h1>
+        <div class="header-left">
+            <div class="logo-container">
+                <img src="/static/logo.png" alt="De Eetstudio Logo" class="logo-img">
+                <h1>Eetstudio</h1>
+            </div>
         </div>
-        <nav class="tab-knoppen">
-            <button id="btn-home" class="actief" onclick="wisselTab('home')">Sessies</button>
-            <button id="btn-admin" onclick="wisselTab('admin')">Beheer</button>
-            <button id="btn-stats" onclick="wisselTab('stats')">Statistieken</button>
+        
+        <div class="header-center">
+            <nav class="tab-knoppen">
+                <button id="btn-home" class="actief" onclick="wisselTab('home')">Sessies</button>
+                <button id="btn-admin" onclick="wisselTab('admin')">Beheer</button>
+                <button id="btn-stats" onclick="wisselTab('stats')">Statistieken</button>
+            </nav>
+        </div>
+
+        <div class="header-right">
             <button class="btn-darkmode" onclick="toggleDarkMode()">🌙 Nachtmodus</button>
-        </nav>
+        </div>
     </header>
 
     <main>
         <div id="tab-home" class="tab-sectie">
             <div class="no-print" style="display: flex; gap: 20px; align-items: flex-start; width: 100%; padding: 0 20px; box-sizing: border-box;">
-                
-                <!-- LINKSE KANT: Filter & Sessie Overzicht (neemt alle resterende ruimte in) -->
+
+                <!-- LINKSE KANT: Filter & Sessie Overzicht -->
                 <div style="flex: 1; display: flex; flex-direction: column; gap: 20px; min-width: 0;">
                     <section class="card opzoek-card" style="margin: 0;">
                         <h2>Patiënt Opzoeken & Status Filters</h2>
@@ -44,7 +52,7 @@
                             <option value="betaald">Alleen betaalde sessies</option>
                             <option value="Gratis traject">Alleen gratis trajecten</option>
                         </select>
-                        
+
                         <div id="sessie-teller" class="teller-vak hidden">
                             Totaal aantal sessies binnen filter: <span id="teller-getal">0</span>
                         </div>
@@ -64,7 +72,7 @@
                                     <th>Datum & Tijd</th>
                                     <th>Patiënt</th>
                                     <th>Therapeut</th>
-                                    <th>Duur</th> <!-- NIEUWE KOLOM -->
+                                    <th>Duur</th>
                                     <th>Bedrag</th>
                                     <th>Status</th>
                                 </tr>
@@ -74,7 +82,7 @@
                     </section>
                 </div>
 
-                <!-- RECHTSE KANT: Nieuwe Sessie Registreren (vaste breedte rechts) -->
+                <!-- RECHTSE KANT: Nieuwe Sessie Registreren -->
                 <div style="width: 420px; flex-shrink: 0;">
                     <section class="card registratie-card" style="margin: 0;">
                         <h2>Nieuwe Sessie Registreren</h2>
@@ -86,11 +94,14 @@
                                 <div id="dropdown-patient-sessie" class="autocomplete-dropdown hidden"></div>
                             </div>
                             
+                            <!-- Vaste ruimte voor traject info (zodat de boel niet verschuift!) -->
+                            <div id="info-gratis-limiet" style="min-height: 20px; font-size: 13px; margin-top: 4px; margin-bottom: 10px;"></div>
+
                             <label>Therapeut:</label>
                             <select id="select-therapeut" required>
                                 <option value="" disabled selected>Kies een therapeut...</option>
                             </select>
-                            
+
                             <label>Datum & Tijd:</label>
                             <input type="datetime-local" id="datum-tijd" required>
 
@@ -111,7 +122,7 @@
                                 <option value="Gratis traject">Gratis traject (Vergoed / 20-sessies regeling)</option>
                             </select>
 
-                            <button type="submit" style="margin-top: 15px;">Opslaan</button>
+                            <button type="submit" style="margin-top: 15px;">Controleren & Opslaan</button>
                         </form>
                         <div id="msg-sessie" class="bericht"></div>
                     </section>
@@ -140,8 +151,7 @@
                                     <th>Aantal Sessies</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                </tbody>
+                            <tbody></tbody>
                         </table>
                     </section>
                 </div>
@@ -149,26 +159,24 @@
         </div>
 
         <div id="tab-admin" class="tab-sectie hidden">
-            <!-- RIJ 1: Formulieren voor Nieuwe Patiënt & Therapeut (Gedwongen op 65% / 35%) -->
+            <!-- RIJ 1: Formulieren (65% / 35%) -->
             <div class="kolom-container" style="flex-wrap: nowrap; align-items: stretch;">
-                
                 <div class="kolom" style="flex: 2; width: 65%;">
                     <section class="card card-flex">
                         <h2>Nieuwe Patiënt Toevoegen</h2>
                         <form id="form-patient">
-                            <!-- Hier staan je velden voor voornaam, achternaam, traject, etc... -->
                             <label>Voornaam:</label>
                             <input type="text" id="voornaam" required>
                             <label>Achternaam:</label>
                             <input type="text" id="achternaam" required>
                             <label>Geboortedatum:</label>
                             <input type="date" id="geboortedatum" required>
-                            
+
                             <label>Gratis Traject toegekend (in uren, 0 = geen):</label>
                             <input type="number" id="traject-uren" value="0" min="0" required>
                             <label>Traject geldig tot (optioneel):</label>
                             <input type="date" id="traject-vervaldatum">
-                            
+
                             <button type="submit">Voeg Patiënt Toe</button>
                         </form>
                         <div id="msg-patient" class="bericht"></div>
@@ -180,7 +188,6 @@
                     <section class="card card-flex">
                         <h2>Nieuwe Therapeut Toevoegen</h2>
                         <form id="form-therapeut">
-                            <!-- Hier staan je velden voor de therapeut... -->
                             <label>Voornaam:</label>
                             <input type="text" id="therapeut-voornaam" required>
                             <label>Achternaam:</label>
@@ -194,21 +201,21 @@
                 </div>
             </div>
 
-            <!-- RIJ 2: OVERZICHT TABELLEN BEHEER (Gedwongen naast elkaar) -->
+            <!-- RIJ 2: Tabellen (65% / 35%) -->
             <div class="kolom-container" style="flex-wrap: nowrap; align-items: flex-start;">
-                
-                <!-- PATIENTEN OVERZICHT (65% breedte) -->
+                <!-- PATIENTEN OVERZICHT -->
                 <div class="kolom" style="flex: 2; width: 65%;">
                     <section class="card" style="overflow-x: auto;">
                         <h2>Patiënten Overzicht</h2>
                         <input type="text" id="zoek-patient-admin" onkeyup="zoekInAdminPatienten()" placeholder="🔍 Zoek patiënt op naam..." style="margin-bottom: 15px; width: 100%; max-width: 400px; padding: 10px; border-radius: 6px; border: 2px solid #ddd;">
-    
-                        <table id="tabel-admin-patienten" style="min-width: 550px;">
+
+                        <table id="tabel-admin-patienten" style="min-width: 600px;">
                             <thead>
                                 <tr>
                                     <th>Naam</th>
                                     <th>Geboortedatum</th>
                                     <th>Traject (Uren)</th>
+                                    <th>Geldig tot</th>
                                     <th>Acties</th>
                                 </tr>
                             </thead>
@@ -217,7 +224,7 @@
                     </section>
                 </div>
 
-                <!-- THERAPEUTEN OVERZICHT (35% breedte) -->
+                <!-- THERAPEUTEN OVERZICHT -->
                 <div class="kolom" style="flex: 1; width: 35%;">
                     <section class="card" style="overflow-x: auto;">
                         <h2>Therapeuten Overzicht</h2>
@@ -237,6 +244,7 @@
         </div>
     </main>
 
+    <!-- MODAL: SESSIE VERWIJDEREN -->
     <div id="delete-modal" class="modal-overlay hidden no-print">
         <div class="modal-content">
             <h3 style="margin-top: 0;">Sessie verwijderen</h3>
@@ -249,15 +257,29 @@
         </div>
     </div>
 
+    <!-- MODAL: PERSOON ARCHIVEREN -->
     <div id="archive-modal" class="modal-overlay hidden no-print">
         <div class="modal-content">
             <h3 style="margin-top: 0;">Persoon Archiveren</h3>
             <p>Weet je zeker dat je deze persoon wil archiveren?</p>
-            <p style="font-size: 13px; color: #555;">Ze verdwijnen uit de keuzelijsten, maar oude sessies blijven gewoon bewaard voor de administratie.</p>
+            <p style="font-size: 13px; color: #555;">Ze verdwijnen uit de keuzelijsten, maar oude sessies blijven bewaard.</p>
             <p id="archive-info" style="font-weight: bold; margin: 15px 0; color: #2c3e50; background: #ecf0f1; padding: 10px; border-radius: 4px;"></p>
             <div class="modal-buttons">
                 <button class="btn-ja" onclick="bevestigArchiveren()">JA</button>
                 <button class="btn-nee" onclick="sluitArchiveModal()">NEE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: SESSIE BEVESTIGEN (NIEUW) -->
+    <div id="confirm-sessie-modal" class="modal-overlay hidden no-print">
+        <div class="modal-content" style="width: 450px;">
+            <h3 style="margin-top: 0;">Sessie Opslaan</h3>
+            <p>Kijk deze gegevens even na. Ben je zeker dat je dit wil opslaan?</p>
+            <div id="confirm-sessie-info" style="text-align: left; background: #ecf0f1; padding: 15px; border-radius: 4px; color: #2c3e50; font-size: 15px; margin: 15px 0; line-height: 1.6;"></div>
+            <div class="modal-buttons">
+                <button class="btn-ja" onclick="bevestigSessieOpslaan()">JA, OPSLAAN</button>
+                <button class="btn-nee" onclick="sluitConfirmModal()">ANNULEER</button>
             </div>
         </div>
     </div>

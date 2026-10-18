@@ -18,14 +18,17 @@ services:
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
 
   # 2. De Web Interface
-  adminer:
-    image: adminer:latest
-    container_name: eetstudio_adminer
-    restart: always
-    ports:
-      - "8080:8080"
-    depends_on:
-      - db
+  phpmyadmin:
+   image: phpmyadmin:latest
+   container_name: eetstudio_phpmyadmin
+   restart: always
+   ports:
+     - "8081:80"
+   environment:
+     PMA_HOST: db
+     UPLOAD_LIMIT: 300M
+   depends_on:
+     - db
 
   api:
     build: ./backend
